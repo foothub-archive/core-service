@@ -22,6 +22,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#installed-apps
 INSTALLED_APPS = [
     'rest_framework',  # utilities for rest apis
+
+    'profiles',
 ]
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -132,11 +134,12 @@ JWT_AUTH = {
     'JWT_ALLOW_REFRESH': True,
     'JWT_PRIVATE_KEY': private_key,
     'JWT_PUBLIC_KEY': public_key,
-    'JWT_ALGORITHM': 'RS256'
+    'JWT_ALGORITHM': 'RS256',
+    'JWT_PAYLOAD_GET_USERNAME_HANDLER': 'jwt_utils.handlers.jwt_get_uuid_from_payload_handler',
 }
 
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-user-model
-# AUTH_USER_MODEL = None
+AUTH_USER_MODEL = 'profiles.Profile'
 
 # custom
 START_DATETIME = datetime.datetime.now()
