@@ -17,7 +17,7 @@ class PemKeyCreator:
             fp.write(key)
 
     @classmethod
-    def create_key_pair(cls, path: str='') -> Tuple[str, str]:
+    def create_key_pair(cls, path: str = '') -> Tuple[str, str]:
         key = rsa.generate_private_key(
             backend=default_backend(),
             public_exponent=cls.PUBLIC_EXPONENT,
