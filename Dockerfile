@@ -1,7 +1,7 @@
-FROM python:3.6
+FROM python:3.7
 ENV PYTHONUNBUFFERED 1
 
-RUN pip3.6 install pipenv
+RUN pip3.7 install pipenv
 
 COPY . code
 WORKDIR /code
