@@ -1,0 +1,6 @@
+[run]
+branch = True
+
+source = core, utils
+
+omit = *migrations*, *urls*, *test*, *wsgi.py
