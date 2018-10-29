@@ -6,4 +6,4 @@ class ProfilePermissions(permissions.BasePermission):
         return request.user is not None
 
     def has_object_permission(self, request, view, obj):
-        return True
+        return request.method == 'GET' or request.user == obj
