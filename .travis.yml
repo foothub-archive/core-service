@@ -9,7 +9,7 @@ before_script:
   - docker-compose build
 
 script:
- - docker-compose run -e CODECOV_TOKEN=$CODECOV_TOKEN --rm web bash -c "python create_keys.py && flake8 core && mypy core && python wait_for_postgres.py && cd core && coverage run manage.py test -v 2 && coverage html && codecov"        
+ - docker-compose run -e CODECOV_TOKEN=$CODECOV_TOKEN --rm web bash -c "cd core && j-crypto-create-pair && cd .. && flake8 core && mypy core && python wait_for_postgres.py && cd core && coverage run manage.py test -v 2 && coverage html && codecov"        
 after_script:
   - docker-compose down
 

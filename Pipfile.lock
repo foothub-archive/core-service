@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0011334599a77f820bca41b0188972965f4f018c1337e2619ae64befc1c4ec13"
+            "sha256": "4d5b5080e86a7420acf699a00a291638b766fde3a23f0dd31e57b466d0dbd555"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -124,6 +124,14 @@
             ],
             "version": "==2.7"
         },
+        "j-crypto": {
+            "hashes": [
+                "sha256:3973ec57fa991207ebf6a7a66e0039dac9c006318931e0fdf0a0ba68a21ac6ff",
+                "sha256:fa85617e42111ee55cda778df3ca468df018414c5247b367423e8fd062bc019b"
+            ],
+            "index": "pypi",
+            "version": "==0.1"
+        },
         "psycopg2-binary": {
             "hashes": [
                 "sha256:04afb59bbbd2eab3148e6816beddc74348078b8c02a1113ea7f7822f5be4afe3",
@@ -175,10 +183,10 @@
         },
         "pytz": {
             "hashes": [
-                "sha256:642253af8eae734d1509fc6ac9c1aee5e5b69d76392660889979b9870610a46b",
-                "sha256:91e3ccf2c344ffaa6defba1ce7f38f97026943f675b7703f44789768e4cb0ece"
+                "sha256:31cb35c89bd7d333cd32c5f278fca91b523b0834369e757f4c5641ea252236ca",
+                "sha256:8e0f8568c118d3077b46be7d654cc8167fa916092e28320cde048e54bfc9f1e6"
             ],
-            "version": "==2018.6"
+            "version": "==2018.7"
         },
         "six": {
             "hashes": [
