@@ -1,7 +1,8 @@
-from django.urls import path
+from django.urls import path, include
 
 from core.views import status_view
 
 urlpatterns = [
     path('', status_view),
+    path('', include('profiles.urls'))
 ]

@@ -1,6 +1,6 @@
 [run]
 branch = True
 
-source = core, utils
+source = core, utils, profiles
 
 omit = *migrations*, *urls*, *test*, *wsgi.py
