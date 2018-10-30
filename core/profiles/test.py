@@ -128,3 +128,14 @@ class TestProfilesApi(APITestCase):
         response = self.client.delete(
             self.instance_url(self.joao_profile), data={}, content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 405)
+
+    def test_me_401(self):
+        response = self.client.get(
+            f'{self.URL}/me', content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 401)
+
+    def test_me_200(self):
+        response = self.client.get(
+            f'{self.URL}/me', content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['name'], USER_JOAO['name'])
