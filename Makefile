@@ -35,15 +35,16 @@ lint: # check style with flake8
 type-check: ## check types with mypy
 	mypy core && rm -r .mypy_cache
 
-test: # run django tests
-	cd core && python manage.py test -v 2 && cd ..
+migrations-check: # checks models consistency
+	cd core && python manage.py makemigrations --check --dry-run && cd ..
 
-coverage: # run django tests with coverage
+test: # run django tests with coverage
 	cd core && coverage run manage.py test -v 2 && coverage html && cd ..
 
-tests:
+run-tests:
 	$(MAKE) lint
 	$(MAKE) type-check
+	$(MAKE) migrations-check
 	$(MAKE) test
 
 start-dev: # start development containers
