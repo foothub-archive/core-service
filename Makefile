@@ -41,11 +41,19 @@ migrations-check: # checks models consistency
 test: # run django tests with coverage
 	cd core && coverage run manage.py test -v 2 && coverage html && cd ..
 
+codecov:
+	cd core && codecov
+
 run-tests:
 	$(MAKE) lint
 	$(MAKE) type-check
 	$(MAKE) migrations-check
 	$(MAKE) test
+
+run-ci:
+	$(MAKE) create-keys
+	$(MAKE) run-tests
+	$(MAKE) codecov
 
 start-dev: # start development containers
 	docker-compose build

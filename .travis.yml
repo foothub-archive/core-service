@@ -9,7 +9,8 @@ before_script:
   - docker-compose build
 
 script:
- - docker-compose run -e CODECOV_TOKEN=$CODECOV_TOKEN --rm web bash -c "make run-tests && cd core && codecov"        
+ - docker-compose run -e CODECOV_TOKEN=$CODECOV_TOKEN --rm web bash -c "make run-ci" 
+
 after_script:
   - docker-compose down
 
