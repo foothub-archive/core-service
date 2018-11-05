@@ -10,8 +10,8 @@ flake8 core
 mypy core
 coverage run manage.py test -v 2 && coverage html
 pip freeze
-make test
-make coverage
 make lint
 make type-check
-make tests
+make migrations-check
+make test
+make run-tests
