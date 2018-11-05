@@ -46,6 +46,16 @@ class TestProfilesApi(APITestCase):
             'HTTP_AUTHORIZATION': f'JWT {token}',
         }
 
+    def test_options(self):
+        response = self.client.options(self.URL, content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.options(self.instance_url(self.vasco_profile), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.options(f'{self.URL}/me', content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 200)
+
     def test_list_200_401(self):
         response = self.client.get(self.URL, content_type=self.CONTENT_TYPE)
         self.assertEqual(response.status_code, 401)
