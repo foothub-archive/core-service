@@ -2,7 +2,7 @@ python manage.py makemigrations
 python manage.py migrate
 python manage.py showmigrations
 python manage.py diffsettings
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 python manage.py test
 python manage.py dbshell
 python manage.py shell

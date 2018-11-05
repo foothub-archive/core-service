@@ -57,5 +57,5 @@ run-ci:
 
 start-dev: # start development containers
 	docker-compose build
-	docker-compose run --rm -p 8000:8000 web bash -c "bash"
+	docker-compose run --rm -p 8002:8000 web bash -c "bash"
 	docker-compose down
