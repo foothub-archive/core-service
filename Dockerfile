@@ -5,7 +5,7 @@ RUN pip3.7 install pipenv
 
 COPY . code
 WORKDIR /code
-RUN pipenv install --system --dev
+RUN pipenv install --system --deploy --dev
 
 EXPOSE 8000
 

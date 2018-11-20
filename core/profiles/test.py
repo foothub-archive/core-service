@@ -2,7 +2,8 @@ import uuid
 import json
 
 from rest_framework.test import APITestCase
-from rest_framework_jwt.settings import api_settings
+from rest_framework.settings import api_settings
+from rest_framework_jwt.settings import api_settings as jwt_settings
 
 from .models import Profile
 
@@ -38,7 +39,7 @@ class TestProfilesApi(APITestCase):
         self.joao_profile = Profile.objects.create(**USER_JOAO)
         self.chi_profile = Profile.objects.create(**USER_CHI)
 
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
         payload = {'uuid': USER_JOAO['external_uuid']}
         token = jwt_encode_handler(payload)
 
@@ -46,28 +47,26 @@ class TestProfilesApi(APITestCase):
             'HTTP_AUTHORIZATION': f'JWT {token}',
         }
 
-    def test_options(self):
+    def test_options_401(self):
         response = self.client.options(self.URL, content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 401)
+
+    def test_options_200(self):
+        response = self.client.options(self.URL, content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.options(self.instance_url(self.vasco_profile), content_type=self.CONTENT_TYPE)
-        self.assertEqual(response.status_code, 200)
-
-        response = self.client.options(f'{self.URL}/me', content_type=self.CONTENT_TYPE)
-        self.assertEqual(response.status_code, 200)
-
-    def test_list_200_401(self):
+    def test_list_401(self):
         response = self.client.get(self.URL, content_type=self.CONTENT_TYPE)
         self.assertEqual(response.status_code, 401)
 
-    def test_list_200_200(self):
+    def test_list_200(self):
         response = self.client.get(self.URL, content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.data['next'])
-        self.assertIsNone(response.data['previous'])
-        self.assertEqual(response.data['count'], 3)
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(response.json()['count'], 3)
         self.assertEqual(
-            response.data['results'],
+            response.json()['results'],
             [{'name': profile.name} for profile in [self.chi_profile, self.joao_profile, self.vasco_profile]]
         )
 
@@ -76,13 +75,36 @@ class TestProfilesApi(APITestCase):
         response = self.client.get(
             f'{self.URL}?search={pattern}', content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.data['next'])
-        self.assertIsNone(response.data['previous'])
-        self.assertEqual(response.data['count'], 2)
+
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(response.json()['count'], 2)
         self.assertEqual(
-            response.data['results'],
+            response.json()['results'],
             [{'name': profile.name} for profile in [self.joao_profile, self.vasco_profile]]
         )
+
+    def test_list_200_paginated(self):
+        number_of_dummy_profiles = int(api_settings.PAGE_SIZE * 1.5)
+        for i in range(0, number_of_dummy_profiles):
+            Profile.objects.create(external_uuid=str(i), name=f'dummy_{i}')
+
+        initial_url = f'{self.URL}?search=dummy'
+        response_initial = self.client.get(initial_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response_initial.status_code, 200)
+        self.assertIsNotNone(response_initial.json()['next'])
+        next_page_url = response_initial.json()['next']
+        self.assertIsNone(response_initial.json()['previous'])
+        self.assertEqual(response_initial.json()['count'], api_settings.PAGE_SIZE * 1.5)
+
+        response_next_page = self.client.get(next_page_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertIsNone(response_next_page.json()['next'])
+        self.assertIsNotNone(response_next_page.json()['previous'])
+        prev_page_url = response_next_page.json()['previous']
+        self.assertEqual(response_next_page.json()['count'], api_settings.PAGE_SIZE * 1.5)
+
+        response_prev_page = self.client.get(prev_page_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response_prev_page.json(), response_initial.json())
 
     def test_retrieve_401(self):
         response = self.client.get(
@@ -100,12 +122,62 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['name'], USER_VASCO['name'])
 
-    def test_create_405(self):
-        response = self.client.post(self.URL, content_type=self.CONTENT_TYPE)
-        self.assertEqual(response.status_code, 401)
+    def test_create_400_no_token(self):
+        response = self.client.post(self.URL, data=json.dumps({}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('token', response.json())
+        self.assertEqual(response.json()['token'], ["This field is required."])
 
-        response = self.client.post(self.URL, content_type=self.CONTENT_TYPE, **self.http_auth)
-        self.assertEqual(response.status_code, 405)
+    def test_create_400_bad_token(self):
+        response = self.client.post(
+            self.URL, data=json.dumps({'token': 'bad.token'}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.json())
+        self.assertEqual(response.json()['non_field_errors'], ["Invalid Token field."])
+
+    def test_create_400_no_uuid(self):
+        jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
+        payload = {'no_uuid': 'new_user_uuid'}
+        token = jwt_encode_handler(payload)
+
+        response = self.client.post(
+            self.URL, data=json.dumps({'token': token}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.json())
+        self.assertEqual(response.json()['non_field_errors'], ["Invalid payload (no uuid)."])
+
+    def test_create_400_bad_uuid(self):
+        jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
+        payload = {'uuid': 'bad uuid'}
+        token = jwt_encode_handler(payload)
+
+        response = self.client.post(
+            self.URL, data=json.dumps({'token': token}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.json())
+        self.assertEqual(response.json()['non_field_errors'], ["Invalid payload (bad uuid)."])
+
+    def test_create_400_existing_uuid(self):
+        jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
+        payload = {'uuid': USER_JOAO['external_uuid']}
+        token = jwt_encode_handler(payload)
+
+        response = self.client.post(
+            self.URL, data=json.dumps({'token': token}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.json())
+        self.assertEqual(response.json()['non_field_errors'], ["Invalid payload (existing uuid)."])
+
+    def test_create_201(self):
+        jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
+        payload = {'uuid': uuid.uuid4().hex}
+        token = jwt_encode_handler(payload)
+
+        response = self.client.post(
+            self.URL, data=json.dumps({'token': token}), content_type=self.CONTENT_TYPE)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Profile.objects.count(), 4)
+        self.assertEqual(Profile.objects.filter(external_uuid=payload['uuid']).count(), 1)
 
     def test_update_401(self):
         response = self.client.put(
@@ -136,7 +208,8 @@ class TestProfilesApi(APITestCase):
 
     def test_delete_405(self):
         response = self.client.delete(
-            self.instance_url(self.joao_profile), data={}, content_type=self.CONTENT_TYPE, **self.http_auth)
+            self.instance_url(
+                self.joao_profile), data={}, content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 405)
 
     def test_me_401(self):

@@ -4,9 +4,11 @@ from .managers import ProfileManager
 
 class Profile(models.Model):
 
+    UUID_LEN = 32
+
     # "foreign key" to the auth service User Model
     external_uuid = models.CharField(
-        max_length=32,
+        max_length=UUID_LEN,
         editable=False,
         null=False,
         blank=False,
