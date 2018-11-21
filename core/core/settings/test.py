@@ -3,16 +3,24 @@ from django.test import TestCase
 
 class TestLocalSettings(TestCase):
 
-    def test_settings(self):
-        from core.settings.local import DEBUG
+    def setUp(self):
+        import core.settings.local as settings
+        self.settings = settings
 
-        self.assertTrue(DEBUG)
+    def test_settings(self):
+        self.assertTrue(self.settings.DEBUG)
+        self.assertIsNotNone(self.settings.JWT_AUTH['JWT_PRIVATE_KEY'])
+        self.assertFalse(self.settings.JWT_AUTH['JWT_VERIFY_EXPIRATION'])
 
 
 class TestProductionSettings(TestCase):
 
-    def test_settings(self):
-        from core.settings.production import DEBUG, INSTALLED_APPS
+    def setUp(self):
+        import core.settings.production as settings
+        self.settings = settings
 
-        self.assertFalse(DEBUG)
-        self.assertIn('gunicorn', INSTALLED_APPS)
+    def test_settings(self):
+        self.assertFalse(self.settings.DEBUG)
+        self.assertIn('gunicorn', self.settings.INSTALLED_APPS)
+        self.assertIsNone(self.settings.JWT_AUTH['JWT_PRIVATE_KEY'])
+        self.assertTrue(self.settings.JWT_AUTH['JWT_VERIFY_EXPIRATION'])
