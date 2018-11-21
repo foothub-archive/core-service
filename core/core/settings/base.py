@@ -122,23 +122,13 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S%z',
 }
 
-# jwt private / public keys
-# a private key is necessary if this service is responsible for generating JWTs
-private_key = PemKeyLoader.load_private_key(os.getenv('DJANGO_JWT_PRIVATE_KEY', ''))
 # a public key is necessary if this service needs to verify incoming JWTs
-public_key = PemKeyLoader.load_public_key(os.getenv('DJANGO_JWT_PUBLIC_KEY', ''))
-
-# enable if this service will be creating jwts
-# assert private_key is not None, 'Private Key not found'
-
-assert public_key is not None, 'Public Key not found'
-
+PUBLIC_KEY = PemKeyLoader.load_public_key(os.getenv('DJANGO_JWT_PUBLIC_KEY', ''))
+assert PUBLIC_KEY is not None, 'Public Key not found'
 
 # http://getblimp.github.io/django-rest-framework-jwt/#additional-settings
 JWT_AUTH = {
-    'JWT_ALLOW_REFRESH': True,
-    'JWT_PRIVATE_KEY': private_key,
-    'JWT_PUBLIC_KEY': public_key,
+    'JWT_PUBLIC_KEY': PUBLIC_KEY,
     'JWT_ALGORITHM': 'RS256',
     'JWT_PAYLOAD_GET_USERNAME_HANDLER': 'jwt_utils.handlers.jwt_get_uuid_from_payload_handler',
 }
