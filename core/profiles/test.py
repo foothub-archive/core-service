@@ -47,8 +47,12 @@ class TestProfilesApi(APITestCase):
             'HTTP_AUTHORIZATION': f'JWT {token}',
         }
 
-    def test_options_200(self):
+    def test_options_401(self):
         response = self.client.options(self.URL)
+        self.assertEqual(response.status_code, 401)
+
+    def test_options_200(self):
+        response = self.client.options(self.URL, **self.http_auth)
         self.assertEqual(response.status_code, 200)
 
     def test_list_401(self):
