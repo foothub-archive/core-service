@@ -21,17 +21,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # https://docs.djangoproject.com/en/2.1/ref/settings/#installed-apps
 INSTALLED_APPS = [
-    'rest_framework',  # utilities for rest apis
-
+    'rest_framework',  # https://www.django-rest-framework.org/
     'profiles',
 ]
+
+# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-user-model
+AUTH_USER_MODEL = 'profiles.Profile'
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'utils.middleware.CORSMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # https://github.com/ottoyiu/django-cors-headers
 ]
 
 # https://docs.djangoproject.com/en/2.1/ref/settings/#authentication-backends
@@ -133,8 +133,24 @@ JWT_AUTH = {
     'JWT_PAYLOAD_GET_USERNAME_HANDLER': 'jwt_utils.handlers.jwt_get_uuid_from_payload_handler',
 }
 
-# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-user-model
-AUTH_USER_MODEL = 'profiles.Profile'
+# https://github.com/OttoYiu/django-cors-headers#cors_origin_allow_all
+CORS_ORIGIN_ALLOW_ALL = True
+
+# https://github.com/OttoYiu/django-cors-headers#cors_allow_methods
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+)
+
+# https://github.com/OttoYiu/django-cors-headers#cors_allow_headers
+CORS_ALLOW_HEADERS = (
+    'authorization',
+    'content-type',
+)
 
 # custom
 START_DATETIME = datetime.datetime.now()

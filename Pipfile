@@ -11,6 +11,7 @@ cryptography = "*"
 psycopg2-binary = "*"
 gunicorn = "*"
 j-crypto = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 ipython = "*"

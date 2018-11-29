@@ -48,19 +48,19 @@ class TestProfilesApi(APITestCase):
         }
 
     def test_options_401(self):
-        response = self.client.options(self.URL, content_type=self.CONTENT_TYPE)
+        response = self.client.options(self.URL)
         self.assertEqual(response.status_code, 401)
 
     def test_options_200(self):
-        response = self.client.options(self.URL, content_type=self.CONTENT_TYPE, **self.http_auth)
+        response = self.client.options(self.URL, **self.http_auth)
         self.assertEqual(response.status_code, 200)
 
     def test_list_401(self):
-        response = self.client.get(self.URL, content_type=self.CONTENT_TYPE)
+        response = self.client.get(self.URL)
         self.assertEqual(response.status_code, 401)
 
     def test_list_200(self):
-        response = self.client.get(self.URL, content_type=self.CONTENT_TYPE, **self.http_auth)
+        response = self.client.get(self.URL, **self.http_auth)
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['next'])
         self.assertIsNone(response.json()['previous'])
@@ -73,7 +73,7 @@ class TestProfilesApi(APITestCase):
     def test_list_200_search(self):
         pattern = 'Valverde'
         response = self.client.get(
-            f'{self.URL}?search={pattern}', content_type=self.CONTENT_TYPE, **self.http_auth)
+            f'{self.URL}?search={pattern}', **self.http_auth)
         self.assertEqual(response.status_code, 200)
 
         self.assertIsNone(response.json()['next'])
@@ -90,37 +90,37 @@ class TestProfilesApi(APITestCase):
             Profile.objects.create(external_uuid=str(i), name=f'dummy_{i}')
 
         initial_url = f'{self.URL}?search=dummy'
-        response_initial = self.client.get(initial_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        response_initial = self.client.get(initial_url, **self.http_auth)
         self.assertEqual(response_initial.status_code, 200)
         self.assertIsNotNone(response_initial.json()['next'])
         next_page_url = response_initial.json()['next']
         self.assertIsNone(response_initial.json()['previous'])
         self.assertEqual(response_initial.json()['count'], api_settings.PAGE_SIZE * 1.5)
 
-        response_next_page = self.client.get(next_page_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        response_next_page = self.client.get(next_page_url, **self.http_auth)
         self.assertIsNone(response_next_page.json()['next'])
         self.assertIsNotNone(response_next_page.json()['previous'])
         prev_page_url = response_next_page.json()['previous']
         self.assertEqual(response_next_page.json()['count'], api_settings.PAGE_SIZE * 1.5)
 
-        response_prev_page = self.client.get(prev_page_url, content_type=self.CONTENT_TYPE, **self.http_auth)
+        response_prev_page = self.client.get(prev_page_url, **self.http_auth)
         self.assertEqual(response_prev_page.json(), response_initial.json())
 
     def test_retrieve_401(self):
         response = self.client.get(
-            self.instance_url(self.joao_profile), content_type=self.CONTENT_TYPE)
+            self.instance_url(self.joao_profile))
         self.assertEqual(response.status_code, 401)
 
     def test_retrieve_200(self):
         response = self.client.get(
-            self.instance_url(self.joao_profile), content_type=self.CONTENT_TYPE, **self.http_auth)
+            self.instance_url(self.joao_profile), **self.http_auth)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['name'], USER_JOAO['name'])
+        self.assertEqual(response.json()['name'], USER_JOAO['name'])
 
         response = self.client.get(
-            self.instance_url(self.vasco_profile), content_type=self.CONTENT_TYPE, **self.http_auth)
+            self.instance_url(self.vasco_profile), **self.http_auth)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['name'], USER_VASCO['name'])
+        self.assertEqual(response.json()['name'], USER_VASCO['name'])
 
     def test_create_400_no_token(self):
         response = self.client.post(self.URL, data=json.dumps({}), content_type=self.CONTENT_TYPE)
@@ -209,16 +209,14 @@ class TestProfilesApi(APITestCase):
     def test_delete_405(self):
         response = self.client.delete(
             self.instance_url(
-                self.joao_profile), data={}, content_type=self.CONTENT_TYPE, **self.http_auth)
+                self.joao_profile), data={}, **self.http_auth)
         self.assertEqual(response.status_code, 405)
 
     def test_me_401(self):
-        response = self.client.get(
-            f'{self.URL}/me', content_type=self.CONTENT_TYPE)
+        response = self.client.get(f'{self.URL}/me')
         self.assertEqual(response.status_code, 401)
 
     def test_me_200(self):
-        response = self.client.get(
-            f'{self.URL}/me', content_type=self.CONTENT_TYPE, **self.http_auth)
+        response = self.client.get(f'{self.URL}/me', **self.http_auth)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['name'], USER_JOAO['name'])
+        self.assertEqual(response.json()['name'], USER_JOAO['name'])
