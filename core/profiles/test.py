@@ -68,7 +68,8 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(response.json()['count'], 3)
         self.assertEqual(
             response.json()['results'],
-            [ProfileSerializer(profile).data for profile in [self.chi_profile, self.joao_profile, self.vasco_profile]]
+            [ProfileSerializer(profile).data
+             for profile in [self.chi_profile, self.joao_profile, self.vasco_profile]]
         )
 
     def test_list_200_search(self):
