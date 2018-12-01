@@ -6,9 +6,11 @@ from .models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    uuid = serializers.UUIDField(read_only=True, source='external_uuid')
+
     class Meta:
         model = Profile
-        fields = ['name']
+        fields = ['uuid', 'name']
 
 
 class CreateProfileSerializer(serializers.ModelSerializer):
@@ -30,10 +32,14 @@ class CreateProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid payload (existing uuid).")
 
         data['uuid'] = payload['uuid']
+        data['name'] = payload.get('username', '')  # use username to initialize profile.name
         return data
 
     def create(self, validated_data):
-        return self.Meta.model.objects.create(external_uuid=validated_data['uuid'])
+        return self.Meta.model.objects.create(
+            external_uuid=validated_data['uuid'],
+            name=validated_data['name'],
+        )
 
     class Meta:
         model = Profile

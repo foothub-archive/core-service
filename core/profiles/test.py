@@ -6,6 +6,7 @@ from rest_framework.settings import api_settings
 from rest_framework_jwt.settings import api_settings as jwt_settings
 
 from .models import Profile
+from .serializers import ProfileSerializer
 
 
 USER_VASCO = {
@@ -32,7 +33,7 @@ class TestProfilesApi(APITestCase):
 
     @classmethod
     def instance_url(cls, profile: Profile):
-        return f'{cls.URL}/{profile.id}'
+        return f'{cls.URL}/{profile.external_uuid}'
 
     def setUp(self):
         self.vasco_profile = Profile.objects.create(**USER_VASCO)
@@ -67,7 +68,7 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(response.json()['count'], 3)
         self.assertEqual(
             response.json()['results'],
-            [{'name': profile.name} for profile in [self.chi_profile, self.joao_profile, self.vasco_profile]]
+            [ProfileSerializer(profile).data for profile in [self.chi_profile, self.joao_profile, self.vasco_profile]]
         )
 
     def test_list_200_search(self):
@@ -81,7 +82,7 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(response.json()['count'], 2)
         self.assertEqual(
             response.json()['results'],
-            [{'name': profile.name} for profile in [self.joao_profile, self.vasco_profile]]
+            [ProfileSerializer(profile).data for profile in [self.joao_profile, self.vasco_profile]]
         )
 
     def test_list_200_paginated(self):
@@ -170,7 +171,10 @@ class TestProfilesApi(APITestCase):
 
     def test_create_201(self):
         jwt_encode_handler = jwt_settings.JWT_ENCODE_HANDLER
-        payload = {'uuid': uuid.uuid4().hex}
+        payload = {
+            'uuid': uuid.uuid4().hex,
+            'username': 'John Doe'
+        }
         token = jwt_encode_handler(payload)
 
         response = self.client.post(
@@ -178,6 +182,7 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Profile.objects.count(), 4)
         self.assertEqual(Profile.objects.filter(external_uuid=payload['uuid']).count(), 1)
+        self.assertEqual(Profile.objects.get(external_uuid=payload['uuid']).name, payload['username'])
 
     def test_update_401(self):
         response = self.client.put(
