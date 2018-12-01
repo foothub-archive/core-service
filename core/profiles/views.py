@@ -1,3 +1,4 @@
+
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.filters import SearchFilter
@@ -19,6 +20,7 @@ class ProfileViewSet(CreateModelMixin,
     serializer_class = ProfileSerializer
     create_serializer_class = CreateProfileSerializer
     permission_classes = (ProfilePermissions,)
+    lookup_field = 'external_uuid'
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
 
