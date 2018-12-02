@@ -22,5 +22,5 @@ class Invitation(Base):
         abstract = True
         ordering = ('-updated_at',)
 
-    def resolve(self, resolution):
+    def accept(self):
         raise NotImplementedError('Invitations must implement resolve method')

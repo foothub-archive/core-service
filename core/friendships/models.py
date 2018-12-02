@@ -1,10 +1,17 @@
-from generics.models import Invitation
+from django.db import models
+from generics.models import Base, Invitation
 
 
 class FriendshipInvitation(Invitation):
-    def resolve(self, resolution):
-        assert False
+
+    def accept(self):
+        Friendship.objects.create(source=self.inviting, target=self.invited)
+        Friendship.objects.create(source=self.invited, target=self.inviting)
 
 
-class Friendship:
-    pass
+class Friendship(Base):
+    source = models.ForeignKey(to='profiles.Profile', on_delete=models.CASCADE, null=False,
+                               related_name='friend_source')
+
+    target = models.ForeignKey(to='profiles.Profile', on_delete=models.CASCADE, null=False,
+                               related_name='friend_target')

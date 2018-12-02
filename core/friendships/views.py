@@ -1,6 +1,9 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.filters import SearchFilter
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.status import HTTP_204_NO_CONTENT
 
 from generics.permissions import IsAuthenticated
 from .models import FriendshipInvitation
@@ -21,6 +24,12 @@ class ReceivedFriendshipInvitationViewSet(RetrieveModelMixin,
     def get_queryset(self):
         user = self.request.user
         return self.model_class.objects.filter(invited=user)
+
+    @action(methods=('post',), detail=True)
+    def accept(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.accept()
+        return Response(status=HTTP_204_NO_CONTENT)
 
 
 class CreatedFriendshipInvitationViewSet(CreateModelMixin,

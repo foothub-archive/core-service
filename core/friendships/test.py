@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 
 from t_helpers.profiles import set_up as profiles_set_up
 from t_helpers.mixin401 import TMixin401
-from .models import FriendshipInvitation
+from .models import FriendshipInvitation, Friendship
 from .serializers import ReceivedFriendshipInvitationSerializer, CreatedFriendshipInvitationSerializer
 
 
@@ -18,6 +18,10 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
     @classmethod
     def instance_url(cls, instance: FriendshipInvitation):
         return f'{cls.URL}/{instance.id}'
+
+    @classmethod
+    def accept_url(cls, instance: FriendshipInvitation):
+        return f'{cls.URL}/{instance.id}/accept'
 
     def setUp(self):
         profile_set_up = profiles_set_up()
@@ -116,14 +120,27 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         response = self.client.delete(self.instance_url(self.joao_vasco_inivitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_200_invited(self):
+    def test_delete_204_invited(self):
         self.assertEqual(FriendshipInvitation.objects.count(), 3)
         response = self.client.delete(self.instance_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 204)
         self.assertEqual(FriendshipInvitation.objects.count(), 2)
 
-    def test_accept(self):
-        pass
+    def test_accept_404(self):
+        response = self.client.post(self.accept_url(self.chi_vasco_invitation), **self.http_auth)
+        self.assertEqual(response.status_code, 404)
+
+    def test_accept_404_inviting(self):
+        response = self.client.post(self.accept_url(self.joao_vasco_inivitation), **self.http_auth)
+        self.assertEqual(response.status_code, 404)
+
+    def test_accept_204(self):
+        self.assertEqual(Friendship.objects.count(), 0)
+        response = self.client.post(self.accept_url(self.vasco_joao_invitation), **self.http_auth)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(Friendship.objects.count(), 2)
+        self.assertEqual(Friendship.objects.filter(source=self.vasco, target=self.joao).count(), 1)
+        self.assertEqual(Friendship.objects.filter(source=self.joao, target=self.vasco).count(), 1)
 
 
 class TestCreatedFriendshipInvitationsApi(APITestCase):
@@ -136,6 +153,10 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
     @classmethod
     def instance_url(cls, instance: FriendshipInvitation):
         return f'{cls.URL}/{instance.id}'
+
+    @classmethod
+    def accept_url(cls, instance: FriendshipInvitation):
+        return f'{cls.URL}/accept/{instance.id}'
 
     def setUp(self):
         profile_set_up = profiles_set_up()
@@ -252,10 +273,6 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
 
         response = self.client.post(
             self.URL, data=json.dumps(payload), content_type=self.CONTENT_TYPE, **self.http_auth)
-        print('\n\n\n~~~~~')
-        import pprint
-        pprint.pprint(response.json())
-        print('~~~~~\n\n\n')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
             FriendshipInvitation.objects.filter(inviting=self.joao).count(), 2)
@@ -277,11 +294,12 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
         response = self.client.delete(self.instance_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_200_inviting(self):
+    def test_delete_204_inviting(self):
         self.assertEqual(FriendshipInvitation.objects.count(), 3)
         response = self.client.delete(self.instance_url(self.joao_vasco_inivitation), **self.http_auth)
         self.assertEqual(response.status_code, 204)
         self.assertEqual(FriendshipInvitation.objects.count(), 2)
 
-    def test_accept(self):
-        pass
+    def test_accept_404(self):
+        response = self.client.post(self.accept_url(self.vasco_joao_invitation), **self.http_auth)
+        self.assertEqual(response.status_code, 404)
