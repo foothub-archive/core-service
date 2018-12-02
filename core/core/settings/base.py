@@ -23,6 +23,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 INSTALLED_APPS = [
     'rest_framework',  # https://www.django-rest-framework.org/
     'profiles',
+    'friendships'
 ]
 
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-user-model

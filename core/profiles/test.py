@@ -213,9 +213,7 @@ class TestProfilesApi(APITestCase):
         self.assertEqual(self.joao_profile.name, 'Joao Acciaioli')
 
     def test_delete_405(self):
-        response = self.client.delete(
-            self.instance_url(
-                self.joao_profile), data={}, **self.http_auth)
+        response = self.client.delete(self.instance_url(self.joao_profile), **self.http_auth)
         self.assertEqual(response.status_code, 405)
 
     def test_me_401(self):

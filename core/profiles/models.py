@@ -1,8 +1,10 @@
 from django.db import models
+
+from generics.models import Base
 from .managers import ProfileManager
 
 
-class Profile(models.Model):
+class Profile(Base):
 
     UUID_LEN = 32
 
@@ -14,6 +16,10 @@ class Profile(models.Model):
         blank=False,
         unique=True,
     )
+
+    @property
+    def uuid(self):
+        return self.external_uuid
 
     name = models.CharField(max_length=128)
 
