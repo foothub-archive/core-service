@@ -5,7 +5,8 @@ from rest_framework.test import APITestCase
 from t_helpers.profiles import set_up as profiles_set_up
 from t_helpers.mixin401 import TMixin401
 from .models import FriendshipInvitation, Friendship
-from .serializers import ReceivedFriendshipInvitationSerializer, CreatedFriendshipInvitationSerializer
+from .serializers import (
+    ReceivedFriendshipInvitationSerializer, CreatedFriendshipInvitationSerializer, FriendshipSerializer)
 
 
 class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
@@ -47,7 +48,7 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['next'])
         self.assertIsNone(response.json()['previous'])
-        self.assertEqual(FriendshipInvitation.objects.count(), 3)
+        self.assertEqual(self.model_class.objects.count(), 3)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(
             response.json()['results'],
@@ -73,7 +74,7 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         self.assertEqual(response.json()['count'], 0)
 
     def test_list_200_ordering(self):
-        chi_joao_inivitation = FriendshipInvitation.objects.create(
+        chi_joao_inivitation = self.model_class.objects.create(
             inviting=self.chi, invited=self.joao
         )
 
@@ -81,7 +82,7 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['next'])
         self.assertIsNone(response.json()['previous'])
-        self.assertEqual(FriendshipInvitation.objects.count(), 4)
+        self.assertEqual(self.model_class.objects.count(), 4)
         self.assertEqual(response.json()['count'], 2)
         self.assertEqual(
             response.json()['results'],
@@ -112,19 +113,19 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
                                    data=json.dumps({}), content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 405)
 
-    def test_delete_404(self):
+    def test_destroy_404(self):
         response = self.client.delete(self.instance_url(self.chi_vasco_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_404_inviting(self):
+    def test_destroy_404_inviting(self):
         response = self.client.delete(self.instance_url(self.joao_vasco_inivitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_204_invited(self):
-        self.assertEqual(FriendshipInvitation.objects.count(), 3)
+    def test_destroy_204_invited(self):
+        self.assertEqual(self.model_class.objects.count(), 3)
         response = self.client.delete(self.instance_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(FriendshipInvitation.objects.count(), 2)
+        self.assertEqual(self.model_class.objects.count(), 2)
 
     def test_accept_404(self):
         response = self.client.post(self.accept_url(self.chi_vasco_invitation), **self.http_auth)
@@ -143,7 +144,7 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         self.assertEqual(Friendship.objects.filter(source=self.joao, target=self.vasco).count(), 1)
 
 
-class TestCreatedFriendshipInvitationsApi(APITestCase):
+class TestCreatedFriendshipInvitationsApi(APITestCase, TMixin401):
     URL = '/created_friend_invitations'
     CONTENT_TYPE = 'application/json'
 
@@ -182,7 +183,7 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['next'])
         self.assertIsNone(response.json()['previous'])
-        self.assertEqual(FriendshipInvitation.objects.count(), 3)
+        self.assertEqual(self.model_class.objects.count(), 3)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(
             response.json()['results'],
@@ -199,7 +200,7 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['next'])
         self.assertIsNone(response.json()['previous'])
-        self.assertEqual(FriendshipInvitation.objects.count(), 4)
+        self.assertEqual(self.model_class.objects.count(), 4)
         self.assertEqual(response.json()['count'], 2)
         self.assertEqual(
             response.json()['results'],
@@ -269,15 +270,15 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
         from profiles.models import Profile
         Profile.objects.get(external_uuid=payload['friend_uuid'])
 
-        self.assertEqual(FriendshipInvitation.objects.filter(inviting=self.joao).count(), 1)
+        self.assertEqual(self.model_class.objects.filter(inviting=self.joao).count(), 1)
 
         response = self.client.post(
             self.URL, data=json.dumps(payload), content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
-            FriendshipInvitation.objects.filter(inviting=self.joao).count(), 2)
+            self.model_class.objects.filter(inviting=self.joao).count(), 2)
 
-        new_invitation = FriendshipInvitation.objects.get(id=response.json()['id'])
+        new_invitation = self.model_class.objects.get(id=response.json()['id'])
         self.assertEqual(new_invitation.inviting, self.joao)
         self.assertEqual(new_invitation.invited, self.chi)
 
@@ -286,20 +287,139 @@ class TestCreatedFriendshipInvitationsApi(APITestCase):
                                    data=json.dumps({}), content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 405)
 
-    def test_delete_404(self):
+    def test_destroy_404(self):
         response = self.client.delete(self.instance_url(self.chi_vasco_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_404_invited(self):
+    def test_destroy_404_invited(self):
         response = self.client.delete(self.instance_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_204_inviting(self):
-        self.assertEqual(FriendshipInvitation.objects.count(), 3)
+    def test_destroy_204_inviting(self):
+        self.assertEqual(self.model_class.objects.count(), 3)
         response = self.client.delete(self.instance_url(self.joao_vasco_inivitation), **self.http_auth)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(FriendshipInvitation.objects.count(), 2)
+        self.assertEqual(self.model_class.objects.count(), 2)
 
     def test_accept_404(self):
         response = self.client.post(self.accept_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 404)
+
+
+class TestFriendshipsApi(APITestCase, TMixin401):
+    URL = '/friends'
+    CONTENT_TYPE = 'application/json'
+
+    model_class = Friendship
+    serializer_class = FriendshipSerializer
+
+    @classmethod
+    def instance_url(cls, instance: Friendship):
+        return f'{cls.URL}/{instance.id}'
+
+    @classmethod
+    def accept_url(cls, instance: Friendship):
+        return f'{cls.URL}/accept/{instance.id}'
+
+    def setUp(self):
+        profile_set_up = profiles_set_up()
+        self.vasco, self.chi, self.joao = profile_set_up.profiles
+        self.http_auth = profile_set_up.http_auth
+
+        self.joao_vasco_friendship = self.instance = self.model_class.objects.create(
+            source=self.joao, target=self.vasco
+        )
+        self.vasco_joao_friendship = self.model_class.objects.create(
+            source=self.vasco, target=self.joao
+        )
+        self.chi_vasco_friendship = self.model_class.objects.create(
+            source=self.chi, target=self.vasco
+        )
+
+    def test_create_405(self):
+        response = self.client.post(self.URL,
+                                    data=json.dumps({}), content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 405)
+
+    def test_update_405(self):
+        response = self.client.put(self.instance_url(self.joao_vasco_friendship),
+                                   data=json.dumps({}), content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 405)
+
+    def test_retrieve_404(self):
+        response = self.client.get(self.instance_url(self.vasco_joao_friendship),
+                                   content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 404)
+
+    def test_destroy_404(self):
+        response = self.client.delete(self.instance_url(self.vasco_joao_friendship),
+                                      content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 404)
+
+    def test_options_200(self):
+        response = self.client.options(self.URL, **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+
+    def test_list_200(self):
+        response = self.client.get(self.URL, **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(self.model_class.objects.count(), 3)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(
+            response.json()['results'],
+            [self.serializer_class(invitation).data
+             for invitation in [self.joao_vasco_friendship]]
+        )
+
+    def test_list_200_ordering(self):
+        joao_chi_friendship = self.model_class.objects.create(
+            source=self.joao, target=self.chi,
+        )
+
+        response = self.client.get(self.URL, **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(self.model_class.objects.count(), 4)
+        self.assertEqual(response.json()['count'], 2)
+        self.assertEqual(
+            response.json()['results'],
+            [self.serializer_class(invitation).data
+             for invitation in [joao_chi_friendship, self.joao_vasco_friendship]]
+        )
+
+    def test_list_200_search(self):
+        pattern = 'vasco'
+        response = self.client.get(f'{self.URL}?search={pattern}', **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(response.json()['count'], 1)
+
+        pattern = 'joao'
+        response = self.client.get(f'{self.URL}?search={pattern}', **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIsNone(response.json()['next'])
+        self.assertIsNone(response.json()['previous'])
+        self.assertEqual(response.json()['count'], 0)
+
+    def test_retrieve_200(self):
+        response = self.client.get(self.instance_url(self.joao_vasco_friendship),
+                                   content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), self.serializer_class(self.joao_vasco_friendship).data)
+
+    def test_destroy_204(self):
+        self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 1)
+        self.assertEqual(self.model_class.objects.filter(source=self.vasco).count(), 1)
+
+        response = self.client.delete(self.instance_url(self.joao_vasco_friendship),
+                                      content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 204)
+        # it deletes both friendships!
+        self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 0)
+        self.assertEqual(self.model_class.objects.filter(source=self.vasco).count(), 0)

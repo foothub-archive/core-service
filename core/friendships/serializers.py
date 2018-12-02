@@ -4,7 +4,7 @@ from rest_framework import serializers
 from profiles.serializers import ProfileSerializer
 from profiles.models import Profile
 
-from .models import FriendshipInvitation
+from .models import FriendshipInvitation, Friendship
 
 
 class ReceivedFriendshipInvitationSerializer(serializers.ModelSerializer):
@@ -38,3 +38,10 @@ class CreatedFriendshipInvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendshipInvitation
         fields = ('id', 'friend', 'friend_uuid')
+
+
+class FriendshipSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Friendship
+        fields = ('id', 'target')
