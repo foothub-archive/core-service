@@ -412,6 +412,7 @@ class TestFriendshipsApi(APITestCase, TMixin401):
                                    content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), self.serializer_class(self.joao_vasco_friendship).data)
+        self.assertEqual(response.json()['friend']['name'], self.vasco.name)
 
     def test_destroy_204(self):
         self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 1)

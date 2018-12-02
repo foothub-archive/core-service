@@ -41,7 +41,8 @@ class CreatedFriendshipInvitationSerializer(serializers.ModelSerializer):
 
 
 class FriendshipSerializer(serializers.ModelSerializer):
+    friend = ProfileSerializer(many=False, read_only=True, source='target')
 
     class Meta:
         model = Friendship
-        fields = ('id', 'target')
+        fields = ('id', 'friend')
