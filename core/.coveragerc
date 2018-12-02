@@ -1,6 +1,6 @@
 [run]
 branch = True
 
-source = core, profiles
+source = core, profiles, friendships
 
 omit = *migrations*, *urls*, *test*, *wsgi.py
