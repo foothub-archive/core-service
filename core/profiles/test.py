@@ -87,23 +87,22 @@ class TestProfilesApi(APITestCase):
         )
 
     def test_list_200_paginated(self):
-        number_of_dummy_profiles = int(api_settings.PAGE_SIZE * 1.5)
+        number_of_dummy_profiles = int(api_settings.PAGE_SIZE * 2.5)
         for i in range(0, number_of_dummy_profiles):
             Profile.objects.create(external_uuid=str(i), name=f'dummy_{i}')
 
-        initial_url = f'{self.URL}?search=dummy'
-        response_initial = self.client.get(initial_url, **self.http_auth)
+        response_initial = self.client.get(f'{self.URL}?search=dummy', **self.http_auth)
         self.assertEqual(response_initial.status_code, 200)
-        self.assertIsNotNone(response_initial.json()['next'])
-        next_page_url = response_initial.json()['next']
+        self.assertEqual(response_initial.json()['next'], 2)
         self.assertIsNone(response_initial.json()['previous'])
-        self.assertEqual(response_initial.json()['count'], api_settings.PAGE_SIZE * 1.5)
+        self.assertEqual(response_initial.json()['count'], number_of_dummy_profiles)
+        next_page_url = f'{self.URL}?search=dummy&page=2'
 
         response_next_page = self.client.get(next_page_url, **self.http_auth)
-        self.assertIsNone(response_next_page.json()['next'])
-        self.assertIsNotNone(response_next_page.json()['previous'])
-        prev_page_url = response_next_page.json()['previous']
-        self.assertEqual(response_next_page.json()['count'], api_settings.PAGE_SIZE * 1.5)
+        self.assertEqual(response_next_page.json()['next'], 3)
+        self.assertEqual(response_next_page.json()['previous'], 1)
+        self.assertEqual(response_next_page.json()['count'], number_of_dummy_profiles)
+        prev_page_url = f'{self.URL}?search=dummy&page=1'
 
         response_prev_page = self.client.get(prev_page_url, **self.http_auth)
         self.assertEqual(response_prev_page.json(), response_initial.json())

@@ -114,7 +114,7 @@ REST_FRAMEWORK = {
     ],
 
     # https://www.django-rest-framework.org/api-guide/pagination/#setting-the-pagination-style
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'shared.pagination.SimplePagination',
 
     # https://www.django-rest-framework.org/api-guide/settings/#page_size
     'PAGE_SIZE': int(os.getenv('DJANGO_PAGINATION_LIMIT', '20')),
