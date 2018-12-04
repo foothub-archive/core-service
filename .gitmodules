@@ -1,0 +1,3 @@
+[submodule "core/shared"]
+	path = core/shared
+	url = git@github.com:foothub/backend-shared.git

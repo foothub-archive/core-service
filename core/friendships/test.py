@@ -424,3 +424,15 @@ class TestFriendshipsApi(APITestCase, TMixin401):
         # it deletes both friendships!
         self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 0)
         self.assertEqual(self.model_class.objects.filter(source=self.vasco).count(), 0)
+
+    def test_destroy_204_partial(self):
+        self.vasco_joao_friendship.delete()
+        self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 1)
+        self.assertEqual(self.model_class.objects.filter(source=self.vasco).count(), 0)
+
+        response = self.client.delete(self.instance_url(self.joao_vasco_friendship),
+                                      content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 204)
+        # deletes only one friendship, does not crash!
+        self.assertEqual(self.model_class.objects.filter(source=self.joao).count(), 0)
+        self.assertEqual(self.model_class.objects.filter(source=self.vasco).count(), 0)
