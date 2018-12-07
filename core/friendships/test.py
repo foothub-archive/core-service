@@ -1,5 +1,7 @@
 import json
 
+from django.test import TestCase
+from django.db import IntegrityError
 from rest_framework.test import APITestCase
 
 from t_helpers.profiles import set_up as profiles_set_up
@@ -7,6 +9,69 @@ from t_helpers.mixin401 import TMixin401
 from .models import FriendshipInvitation, Friendship
 from .serializers import (
     ReceivedFriendshipInvitationSerializer, CreatedFriendshipInvitationSerializer, FriendshipSerializer)
+
+
+class TestFriendshipInvitations(TestCase):
+    """
+    Testing FriendshipInvitation Model
+    """
+
+    def setUp(self):
+        profile_set_up = profiles_set_up()
+        self.vasco, self.chi, _ = profile_set_up.profiles
+
+        self.vasco_chi = FriendshipInvitation.objects.create(inviting=self.vasco, invited=self.chi)
+        self.chi_vasco = FriendshipInvitation.objects.create(inviting=self.chi, invited=self.vasco)
+
+    def test_ordering(self):
+        items = FriendshipInvitation.objects.all()
+        self.assertEqual(list(items), [self.chi_vasco, self.vasco_chi])
+
+    def test_unique_together(self):
+        with self.assertRaises(IntegrityError):
+            FriendshipInvitation.objects.create(inviting=self.vasco, invited=self.chi)
+
+    def test_accept_get_create_friends(self):
+        self.assertEqual(FriendshipInvitation.objects.count(), 2)
+        self.assertEqual(Friendship.objects.count(), 0)
+        self.vasco_chi.accept()
+        self.assertEqual(FriendshipInvitation.objects.count(), 0)
+        self.assertEqual(Friendship.objects.count(), 2)
+        self.assertEqual(Friendship.objects.filter(source=self.vasco, target=self.chi).count(), 1)
+        self.assertEqual(Friendship.objects.filter(source=self.chi, target=self.vasco).count(), 1)
+
+        # this is not expected to actually happen
+        new_vasco_chi = FriendshipInvitation.objects.create(inviting=self.vasco, invited=self.chi)
+        self.assertEqual(FriendshipInvitation.objects.count(), 1)
+        self.assertEqual(Friendship.objects.count(), 2)
+        self.assertEqual(Friendship.objects.filter(source=self.vasco, target=self.chi).count(), 1)
+        self.assertEqual(Friendship.objects.filter(source=self.chi, target=self.vasco).count(), 1)
+        new_vasco_chi.accept()
+        self.assertEqual(FriendshipInvitation.objects.count(), 0)
+        self.assertEqual(Friendship.objects.count(), 2)
+        self.assertEqual(Friendship.objects.filter(source=self.vasco, target=self.chi).count(), 1)
+        self.assertEqual(Friendship.objects.filter(source=self.chi, target=self.vasco).count(), 1)
+
+
+class TestFriendship(TestCase):
+    """
+    Testing Friendship Model
+    """
+
+    def setUp(self):
+        profile_set_up = profiles_set_up()
+        self.vasco, self.chi, _ = profile_set_up.profiles
+
+        self.vasco_chi = Friendship.objects.create(source=self.vasco, target=self.chi)
+        self.chi_vasco = Friendship.objects.create(source=self.chi, target=self.vasco)
+
+    def test_ordering(self):
+        items = Friendship.objects.all()
+        self.assertEqual(list(items), [self.chi_vasco, self.vasco_chi])
+
+    def test_unique_together(self):
+        with self.assertRaises(IntegrityError):
+            Friendship.objects.create(source=self.vasco, target=self.chi)
 
 
 class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
@@ -136,12 +201,20 @@ class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):
         self.assertEqual(response.status_code, 404)
 
     def test_accept_204(self):
+        self.assertEqual(self.model_class.objects.filter(inviting=self.joao, invited=self.vasco).count(), 1)
+        self.assertEqual(self.model_class.objects.filter(inviting=self.vasco, invited=self.joao).count(), 1)
+        self.assertEqual(self.model_class.objects.count(), 3)
         self.assertEqual(Friendship.objects.count(), 0)
+
         response = self.client.post(self.accept_url(self.vasco_joao_invitation), **self.http_auth)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(Friendship.objects.count(), 2)
+
+        self.assertEqual(self.model_class.objects.filter(inviting=self.joao, invited=self.vasco).count(), 0)
+        self.assertEqual(self.model_class.objects.filter(inviting=self.vasco, invited=self.joao).count(), 0)
+        self.assertEqual(self.model_class.objects.count(), 1)
         self.assertEqual(Friendship.objects.filter(source=self.vasco, target=self.joao).count(), 1)
         self.assertEqual(Friendship.objects.filter(source=self.joao, target=self.vasco).count(), 1)
+        self.assertEqual(Friendship.objects.count(), 2)
 
 
 class TestCreatedFriendshipInvitationsApi(APITestCase, TMixin401):
@@ -262,7 +335,17 @@ class TestCreatedFriendshipInvitationsApi(APITestCase, TMixin401):
             self.URL, data=json.dumps(payload), content_type=self.CONTENT_TYPE, **self.http_auth)
         self.assertEqual(response.status_code, 400)
         self.assertIn('non_field_errors', response.json())
-        self.assertEqual(response.json()['non_field_errors'], ["Unable to find Invited Profile."])
+        self.assertEqual(response.json()['non_field_errors'], ["Unable to find invited profile."])
+
+    def test_create_400_already_friends(self):
+        payload = {'friend_uuid': self.chi.uuid}
+        Friendship.objects.create(source=self.joao, target=self.chi)
+
+        response = self.client.post(
+            self.URL, data=json.dumps(payload), content_type=self.CONTENT_TYPE, **self.http_auth)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('non_field_errors', response.json())
+        self.assertEqual(response.json()['non_field_errors'], ["Invite profile is already a friend."])
 
     def test_create_201(self):
         payload = {'friend_uuid': self.chi.uuid}
