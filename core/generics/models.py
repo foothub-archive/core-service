@@ -21,6 +21,7 @@ class Invitation(Base):
     class Meta:
         abstract = True
         ordering = ('-updated_at',)
+        unique_together = ('inviting', 'invited')
 
     def accept(self):
         raise NotImplementedError('Invitations must implement resolve method')

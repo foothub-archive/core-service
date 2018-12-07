@@ -23,9 +23,12 @@ class CreatedFriendshipInvitationSerializer(serializers.ModelSerializer):
         try:
             invited = Profile.objects.get(external_uuid=data['friend_uuid'].hex)
         except ObjectDoesNotExist:
-            raise serializers.ValidationError("Unable to find Invited Profile.")
+            raise serializers.ValidationError("Unable to find invited profile.")
 
         inviting = self.context['request'].user
+
+        if Friendship.objects.filter(source=inviting, target=invited).exists():
+            raise serializers.ValidationError("Invite profile is already a friend.")
 
         return {
             'inviting': inviting,
