@@ -12,6 +12,7 @@ psycopg2-binary = "*"
 gunicorn = "*"
 j-crypto = "*"
 django-cors-headers = "*"
+faker = "*"
 
 [dev-packages]
 ipython = "*"
