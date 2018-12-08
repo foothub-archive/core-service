@@ -31,6 +31,15 @@ class TestFriendshipInvitations(TestCase):
         with self.assertRaises(IntegrityError):
             FriendshipInvitation.objects.create(inviting=self.vasco, invited=self.chi)
 
+    def test_invite_to_self(self):
+        with self.assertRaises(IntegrityError):
+            FriendshipInvitation.objects.create(inviting=self.vasco, invited=self.vasco)
+
+    def test_delete_cascaded(self):
+        self.assertEqual(FriendshipInvitation.objects.count(), 2)
+        self.vasco.delete()
+        self.assertEqual(FriendshipInvitation.objects.count(), 0)
+
     def test_accept_get_create_friends(self):
         self.assertEqual(FriendshipInvitation.objects.count(), 2)
         self.assertEqual(Friendship.objects.count(), 0)
@@ -72,6 +81,15 @@ class TestFriendship(TestCase):
     def test_unique_together(self):
         with self.assertRaises(IntegrityError):
             Friendship.objects.create(source=self.vasco, target=self.chi)
+
+    def test_delete_cascaded(self):
+        self.assertEqual(Friendship.objects.count(), 2)
+        self.vasco.delete()
+        self.assertEqual(Friendship.objects.count(), 0)
+
+    def test_friends_with_self(self):
+        with self.assertRaises(IntegrityError):
+            Friendship.objects.create(source=self.vasco, target=self.vasco)
 
 
 class TestReceivedFriendshipInvitationsApi(APITestCase, TMixin401):

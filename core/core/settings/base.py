@@ -22,6 +22,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#installed-apps
 INSTALLED_APPS = [
     'rest_framework',  # https://www.django-rest-framework.org/
+
+    'core',
     'profiles',
     'friendships'
 ]

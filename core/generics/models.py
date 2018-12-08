@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, IntegrityError
 
 
 class Base(models.Model):
@@ -17,6 +17,12 @@ class Invitation(Base):
 
     invited = models.ForeignKey(to='profiles.Profile', on_delete=models.CASCADE, null=False,
                                 related_name='%(app_label)s_%(class)s_invited')
+
+    def save(self, *args, **kwargs):
+        # No self invitations!
+        if self.inviting == self.invited:
+            raise IntegrityError('inviting and invited can not be the same')
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True

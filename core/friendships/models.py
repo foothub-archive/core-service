@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, IntegrityError
 from generics.models import Base, Invitation
 
 
@@ -7,7 +7,7 @@ class FriendshipInvitation(Invitation):
 
     def accept(self) -> None:
         """
-        creates a Frienships for both profiles the invite (invting and invited)
+        creates a Friendships for both profiles the invite (invting and invited)
         deletes invite and reverse invite if exists
 
         """
@@ -27,6 +27,12 @@ class Friendship(Base):
 
     target = models.ForeignKey(to='profiles.Profile', on_delete=models.CASCADE, null=False,
                                related_name='friend_target')
+
+    def save(self, *args, **kwargs):
+        # No self friendships!
+        if self.source == self.target:
+            raise IntegrityError('inviting and invited can not be the same')
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ('-updated_at',)
