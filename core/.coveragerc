@@ -3,4 +3,4 @@ branch = True
 
 source = core, profiles, friendships, shared
 
-omit = *migrations*, *urls*, *test*, *wsgi.py
+omit = *migrations*, *test*, *wsgi.py, *generate_fake_data.py
