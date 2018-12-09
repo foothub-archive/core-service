@@ -10,7 +10,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['uuid', 'name']
+        fields = ('uuid', 'name')
 
 
 class CreateProfileSerializer(serializers.ModelSerializer):
@@ -43,4 +43,4 @@ class CreateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['token']
+        fields = ('token',)
