@@ -3,7 +3,7 @@ from rest_framework.test import APITestCase
 
 from t_helpers.profiles import set_up as profiles_set_up
 from profiles.models import Profile
-from friendships.models import Friendship
+from friendships.models import FriendshipInvitation, Friendship
 from .serializers import ProfileIsFriendSerializer
 
 
@@ -14,8 +14,16 @@ class TestProfileIsFriendSerializer(TestCase):
 
         Friendship.objects.create(source=self.joao, target=self.vasco)
 
+    def test_has_friend_invitation(self):
+        serializer = ProfileIsFriendSerializer(self.chi)
+        self.assertFalse(serializer.data['has_friend_invitation'])
+        serializer = ProfileIsFriendSerializer(self.vasco)
+        self.assertFalse(serializer.data['has_friend_invitation'])
+
     def test_is_friend_no_context(self):
         serializer = ProfileIsFriendSerializer(self.vasco)
+        self.assertFalse(serializer.data['is_friend'])
+        serializer = ProfileIsFriendSerializer(self.chi)
         self.assertFalse(serializer.data['is_friend'])
 
 
@@ -32,6 +40,7 @@ class TestProfileIsFriendApi(APITestCase):
         self.vasco, self.chi, self.joao = profile_set_up.profiles
         self.http_auth = profile_set_up.http_auth
 
+        FriendshipInvitation.objects.create(inviting=self.joao, invited=self.chi)
         Friendship.objects.create(source=self.joao, target=self.vasco)
 
     def test_options_200(self):
@@ -50,8 +59,10 @@ class TestProfileIsFriendApi(APITestCase):
         self.assertEqual(Profile.objects.count(), 3)
         self.assertEqual(response.json()['count'], 2)
         self.assertEqual(response.json()['results'][0]['uuid'], self.chi.external_uuid)
+        self.assertEqual(response.json()['results'][0]['has_friend_invitation'], True)
         self.assertEqual(response.json()['results'][0]['is_friend'], False)
         self.assertEqual(response.json()['results'][1]['uuid'], self.vasco.external_uuid)
+        self.assertEqual(response.json()['results'][1]['has_friend_invitation'], False)
         self.assertEqual(response.json()['results'][1]['is_friend'], True)
 
     def test_list_200_search(self):
