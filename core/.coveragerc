@@ -1,6 +1,6 @@
 [run]
 branch = True
 
-source = core, profiles, friendships, shared
+source = core, shared, profiles, friendships, friend_profiles,
 
 omit = *migrations*, *test*, *wsgi.py, *generate_fake_data.py
